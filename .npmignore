@@ -1,0 +1,25 @@
+# Source files
+src/
+tests/
+*.test.ts
+*.test.tsx
+
+# Config files
+tsconfig.json
+rollup.config.js
+jest.config.js
+
+# Development
+.vscode/
+.idea/
+*.log
+coverage/
+
+# Git
+.git/
+.gitignore
+
+# Other
+README.md
+*.md
+!dist/
