@@ -10,6 +10,9 @@ export { LogLevel } from './core/LogLevel';
 export { default as Logger } from './core/Logger';
 export * from './core/types';
 
+// Mask utilities
+export { maskSensitiveData, maskValue, initializeMaskConfig, resetMaskConfig } from './utils/mask';
+
 // Default logger instance for convenience
 import ClientLogger from './client/ClientLogger';
 export const logger = new ClientLogger();

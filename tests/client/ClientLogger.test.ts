@@ -45,13 +45,14 @@ describe('ClientLogger', () => {
         spy.mockRestore();
     });
 
-    test('should log with additional data', () => {
+    it('should log with additional data', () => {
         const data = { userId: 123, action: 'click' };
         logger.info('User action', data);
         
+        // Data should be masked, userId is not sensitive so stays the same
         expect(consoleLogSpy).toHaveBeenCalledWith(
             expect.stringContaining('User action'),
-            data
+            expect.objectContaining({ userId: 123, action: 'click' })
         );
     });
 

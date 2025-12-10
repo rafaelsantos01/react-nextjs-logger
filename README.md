@@ -9,13 +9,14 @@ Uma biblioteca de logging moderna e completa para aplicações React e Next.js, 
 
 - 🎯 **Dual Environment**: Funciona tanto no client quanto no server
 - 🪝 **React Hooks**: Hook `useLogger` para componentes React
-- 🔧 **Configurável**: Níveis de log customizáveis
+- 🔒 **Mascaramento Automático**: Protege dados sensíveis (senhas, emails, CPF, etc.) automaticamente
+- 🔧 **Configurável**: Níveis de log e campos sensíveis customizáveis
 - 📝 **TypeScript**: Totalmente tipado
 - 🚀 **Next.js Ready**: Middleware para logging de requisições
 - 📦 **Zero Config**: Funciona out-of-the-box
-- 🎨 **Formatação**: Timestamps automáticos e formatação de mensagens
+- 🎨 **Formatação**: Timestamps automáticos e cores no terminal (servidor)
 - 🔌 **Extensível**: Sistema de transporte customizável
-- ⚡ **Compatível**: React 17+, React 18, React 19 e Next.js 12-15
+- ⚡ **Compatível**: React 17+, React 18, React 19 e Next.js 12-16
 
 ## 📦 Instalação
 
@@ -82,6 +83,37 @@ export async function GET(request: NextRequest) {
 ```
 
 **🔍 Importante**: O `ServerLogger` imprime logs no **terminal do servidor** (onde você roda `npm run dev`), não no console do navegador. Similar ao logging do Spring Boot. [Veja documentação completa](./SERVER_LOGGING.md)
+
+### 🔒 Mascaramento Automático de Dados Sensíveis
+
+```tsx
+'use server';
+import { ServerLogger } from 'react-nextjs-logger';
+
+const logger = new ServerLogger();
+
+export async function loginUser(credentials: any) {
+  // Dados sensíveis são mascarados automaticamente!
+  logger.info('Login attempt', {
+    email: 'user@example.com',     // → 'use***com'
+    password: 'secret123',         // → 'sec***123'
+    userId: 123,                   // → 123 (não mascarado)
+  });
+}
+```
+
+**Campos mascarados por padrão:** password, email, cpf, token, creditCard, phone, etc.
+
+**Configuração opcional (`.env`):**
+```env
+# Desabilitar mascaramento padrão
+NEXT_PUBLIC_DEFAULT_MASK=false
+
+# Adicionar campos customizados
+NEXT_PUBLIC_MASK_FIELDS=customField,secretKey,internalId
+```
+
+📖 **[Documentação completa de mascaramento](./MASKING.md)**
 ```
 
 ## 📚 Documentação

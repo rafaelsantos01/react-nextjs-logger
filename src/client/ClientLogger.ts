@@ -1,4 +1,5 @@
 import { LogLevel } from "../core/LogLevel";
+import { maskSensitiveData } from "../utils/mask";
 
 class ClientLogger {
     private logLevel: LogLevel;
@@ -33,7 +34,9 @@ class ClientLogger {
             const formattedMessage = `[${timestamp}] [CLIENT] [${level}] ${message}`;
             
             if (data) {
-                console.log(formattedMessage, data);
+                // Mask sensitive data before logging
+                const maskedData = maskSensitiveData(data);
+                console.log(formattedMessage, maskedData);
             } else {
                 console.log(formattedMessage);
             }

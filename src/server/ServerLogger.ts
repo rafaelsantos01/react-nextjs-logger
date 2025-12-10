@@ -1,4 +1,5 @@
 import { LogLevel } from '../core/LogLevel';
+import { maskSensitiveData } from '../utils/mask';
 
 // ANSI color codes for terminal output
 const colors = {
@@ -99,34 +100,37 @@ export class ServerLogger {
 
     private transport(level: LogLevel, message: string, data?: LogData): void {
         const formattedMessage = this.formatMessage(level, message);
+        
+        // Mask sensitive data before logging
+        const maskedData = data ? maskSensitiveData(data) : undefined;
 
         // Use console methods based on log level
         switch (level) {
             case LogLevel.ERROR:
-                if (data) {
-                    console.error(formattedMessage, data);
+                if (maskedData) {
+                    console.error(formattedMessage, maskedData);
                 } else {
                     console.error(formattedMessage);
                 }
                 break;
             case LogLevel.WARN:
-                if (data) {
-                    console.warn(formattedMessage, data);
+                if (maskedData) {
+                    console.warn(formattedMessage, maskedData);
                 } else {
                     console.warn(formattedMessage);
                 }
                 break;
             case LogLevel.DEBUG:
-                if (data) {
-                    console.debug(formattedMessage, data);
+                if (maskedData) {
+                    console.debug(formattedMessage, maskedData);
                 } else {
                     console.debug(formattedMessage);
                 }
                 break;
             case LogLevel.INFO:
             default:
-                if (data) {
-                    console.log(formattedMessage, data);
+                if (maskedData) {
+                    console.log(formattedMessage, maskedData);
                 } else {
                     console.log(formattedMessage);
                 }
