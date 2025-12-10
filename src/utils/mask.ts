@@ -19,6 +19,7 @@ const DEFAULT_SENSITIVE_FIELDS = [
     'api_key',
     'authorization',
     'email',
+    'username',
     'e-mail',
     'cpf',
     'cnpj',
