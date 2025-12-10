@@ -1,26 +1,33 @@
-import { useEffect } from 'react';
+import { useMemo } from 'react';
 import ClientLogger from '../ClientLogger';
+import { LogLevel } from '../../core/LogLevel';
 
-const useLogger = () => {
-    const logger = new ClientLogger();
+interface UseLoggerOptions {
+    logLevel?: LogLevel;
+    prefix?: string;
+}
 
-    const info = (message: string) => {
-        logger.info(message);
+const useLogger = (options?: UseLoggerOptions) => {
+    const logger = useMemo(() => {
+        return new ClientLogger(options?.logLevel);
+    }, [options?.logLevel]);
+
+    const info = (message: string, data?: any) => {
+        const fullMessage = options?.prefix ? `[${options.prefix}] ${message}` : message;
+        logger.info(data ? `${fullMessage} ${JSON.stringify(data)}` : fullMessage);
     };
 
-    const warn = (message: string) => {
-        logger.warn(message);
+    const warn = (message: string, data?: any) => {
+        const fullMessage = options?.prefix ? `[${options.prefix}] ${message}` : message;
+        logger.warn(data ? `${fullMessage} ${JSON.stringify(data)}` : fullMessage);
     };
 
-    const error = (message: string) => {
-        logger.error(message);
+    const error = (message: string, data?: any) => {
+        const fullMessage = options?.prefix ? `[${options.prefix}] ${message}` : message;
+        logger.error(data ? `${fullMessage} ${JSON.stringify(data)}` : fullMessage);
     };
 
-    useEffect(() => {
-        logger.info('Logger initialized');
-    }, []);
-
-    return {  info, warn, error };
+    return { info, warn, error };
 };
 
 export default useLogger;

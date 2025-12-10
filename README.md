@@ -40,13 +40,15 @@ pnpm add react-nextjs-logger
 ### Client-Side (React)
 
 ```tsx
+'use client'; // Para Next.js 13+
+
 import { useLogger } from 'react-nextjs-logger';
 
 function MyComponent() {
   const logger = useLogger();
 
   const handleClick = () => {
-    logger.info('Botão clicado!');
+    logger.info('Botão clicado!', { userId: 123 });
     logger.warn('Aviso importante');
     logger.error('Erro ocorreu');
   };

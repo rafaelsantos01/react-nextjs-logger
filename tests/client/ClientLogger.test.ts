@@ -44,4 +44,46 @@ describe('ClientLogger', () => {
         
         spy.mockRestore();
     });
+
+    test('should log with additional data', () => {
+        const data = { userId: 123, action: 'click' };
+        logger.info('User action', data);
+        
+        expect(consoleLogSpy).toHaveBeenCalledWith(
+            expect.stringContaining('User action'),
+            data
+        );
+    });
+
+    test('should log debug messages', () => {
+        logger.debug('Debug message');
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('DEBUG'));
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Debug message'));
+    });
+
+    test('should change log level dynamically', () => {
+        const dynamicLogger = new ClientLogger(LogLevel.INFO);
+        const spy = jest.spyOn(console, 'log').mockImplementation();
+        
+        dynamicLogger.debug('Should not appear');
+        expect(spy).not.toHaveBeenCalled();
+        
+        dynamicLogger.setLogLevel(LogLevel.DEBUG);
+        dynamicLogger.debug('Should appear now');
+        expect(spy).toHaveBeenCalled();
+        
+        spy.mockRestore();
+    });
+
+    test('should include timestamp in log messages', () => {
+        logger.info('Test message');
+        expect(consoleLogSpy).toHaveBeenCalledWith(
+            expect.stringMatching(/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\]/)
+        );
+    });
+
+    test('should include CLIENT identifier in log messages', () => {
+        logger.info('Test message');
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('[CLIENT]'));
+    });
 });

@@ -7,21 +7,36 @@ class ClientLogger {
         this.logLevel = logLevel;
     }
 
-    info(message: string) {
-        this.writeLog(LogLevel.INFO, message);
+    public setLogLevel(level: LogLevel): void {
+        this.logLevel = level;
     }
 
-    warn(message: string) {
-        this.writeLog(LogLevel.WARN, message);
+    info(message: string, data?: any) {
+        this.writeLog(LogLevel.INFO, message, data);
     }
 
-    error(message: string) {
-        this.writeLog(LogLevel.ERROR, message);
+    warn(message: string, data?: any) {
+        this.writeLog(LogLevel.WARN, message, data);
     }
 
-    private writeLog(level: LogLevel, message: string) {
+    error(message: string, data?: any) {
+        this.writeLog(LogLevel.ERROR, message, data);
+    }
+
+    debug(message: string, data?: any) {
+        this.writeLog(LogLevel.DEBUG, message, data);
+    }
+
+    private writeLog(level: LogLevel, message: string, data?: any) {
         if (this.shouldLog(level)) {
-            console.log(`[${level}] ${message}`);
+            const timestamp = new Date().toISOString();
+            const formattedMessage = `[${timestamp}] [CLIENT] [${level}] ${message}`;
+            
+            if (data) {
+                console.log(formattedMessage, data);
+            } else {
+                console.log(formattedMessage);
+            }
         }
     }
 
