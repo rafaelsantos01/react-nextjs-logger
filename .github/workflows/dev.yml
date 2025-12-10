@@ -25,7 +25,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: 📦 Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm install
 
       - name: 🔍 Run TypeScript check
         run: npx tsc --noEmit
@@ -56,7 +56,7 @@ jobs:
           node-version: "18.x"
 
       - name: 📦 Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm install --legacy-peer-deps
 
       - name: 🏗️ Build package
         run: npm run build
