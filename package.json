@@ -1,6 +1,6 @@
 {
   "name": "react-nextjs-logger",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A logging library for React and Next.js applications",
   "type": "module",
   "main": "dist/index.js",
