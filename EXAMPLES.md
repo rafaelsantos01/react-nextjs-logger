@@ -112,19 +112,22 @@ export default function SimpleComponent() {
 
 import { ServerLogger, LogLevel } from 'react-nextjs-logger';
 
+// Os logs aparecerão no terminal do servidor (VS Code terminal)
 const logger = new ServerLogger(LogLevel.INFO);
 
 export async function saveUser(formData: FormData) {
   const name = formData.get('name');
   
-  logger.info('Salvando usuário', { name });
+  // Log com dados estruturados
+  logger.info('Salvando usuário', { name, timestamp: Date.now() });
   
   try {
     // Database operation
-    logger.info('Usuário salvo com sucesso', { name });
+    logger.info('Usuário salvo com sucesso', { name, id: 123 });
     return { success: true };
   } catch (error) {
-    logger.error('Erro ao salvar usuário', { name, error });
+    // Logger trata objetos Error automaticamente
+    logger.error('Erro ao salvar usuário', error);
     return { success: false };
   }
 }
@@ -134,20 +137,47 @@ export async function saveUser(formData: FormData) {
 
 ```tsx
 import { NextRequest, NextResponse } from 'next/server';
-import { ServerLogger } from 'react-nextjs-logger';
+import { ServerLogger, LogLevel } from 'react-nextjs-logger';
 
-const logger = new ServerLogger();
+// Logs aparecem no terminal do servidor com cores
+const logger = new ServerLogger(LogLevel.DEBUG);
 
 export async function GET(request: NextRequest) {
-  logger.info('API /api/users chamada');
+  const startTime = Date.now();
+  
+  logger.info('API /api/users chamada', {
+    method: 'GET',
+    url: request.url,
+  });
   
   try {
     const users = await fetchUsers();
-    logger.info('Usuários retornados', { count: users.length });
+    const duration = Date.now() - startTime;
+    
+    logger.info('Usuários retornados', { 
+      count: users.length,
+      duration: `${duration}ms`
+    });
+    
     return NextResponse.json(users);
   } catch (error) {
-    logger.error('Erro na API', { error });
+    // Error object é automaticamente formatado
+    logger.error('Erro na API', error as Error);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    logger.debug('Request body recebido', body);
+    
+    // Seu código aqui
+    
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    logger.error('Erro ao processar POST', error as Error);
+    return NextResponse.json({ error: 'Erro' }, { status: 500 });
   }
 }
 ```

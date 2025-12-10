@@ -45,7 +45,7 @@ pnpm add react-nextjs-logger
 import { useLogger } from 'react-nextjs-logger';
 
 function MyComponent() {
-  const logger = useLogger();
+  const logger = useLogger({ prefix: 'MyComponent' });
 
   const handleClick = () => {
     logger.info('Botão clicado!', { userId: 123 });
@@ -57,30 +57,31 @@ function MyComponent() {
 }
 ```
 
-### Server-Side (Next.js API Routes)
+### Server-Side (Next.js - logs no terminal do servidor)
 
 ```typescript
-// pages/api/users.ts
+// app/api/users/route.ts
 import { ServerLogger, LogLevel } from 'react-nextjs-logger';
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { NextRequest, NextResponse } from 'next/server';
 
+// Logs aparecem no TERMINAL DO SERVIDOR (VS Code terminal)
 const logger = new ServerLogger(LogLevel.INFO);
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  logger.info(`[${req.method}] ${req.url}`);
+export async function GET(request: NextRequest) {
+  logger.info('API /api/users chamada', { method: 'GET' });
 
   try {
     const users = await getUsers();
-    logger.info(`Retornando ${users.length} usuários`);
-    res.status(200).json(users);
+    logger.info('Usuários retornados', { count: users.length });
+    return NextResponse.json(users);
   } catch (error) {
-    logger.error(`Erro: ${error.message}`);
-    res.status(500).json({ error: 'Erro interno' });
+    logger.error('Erro ao buscar usuários', error as Error);
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
+```
+
+**🔍 Importante**: O `ServerLogger` imprime logs no **terminal do servidor** (onde você roda `npm run dev`), não no console do navegador. Similar ao logging do Spring Boot. [Veja documentação completa](./SERVER_LOGGING.md)
 ```
 
 ## 📚 Documentação
