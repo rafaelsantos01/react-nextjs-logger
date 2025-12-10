@@ -432,14 +432,9 @@ npm run lint
 
 ## 📋 Roadmap
 
-- [ ] Suporte para Winston/Pino integrado
 - [ ] Logging para diferentes ambientes (file, console, remote)
-- [ ] Integração com serviços de logging (Datadog, Sentry)
 - [ ] Performance monitoring
-- [ ] Log rotation
-- [ ] Structured logging (JSON)
 - [ ] Log filtering e sanitização
-- [ ] Context/correlation IDs
 
 ## 🐛 Bugs e Issues
 
