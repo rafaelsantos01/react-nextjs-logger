@@ -1,6 +1,6 @@
 {
   "name": "react-nextjs-logger",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A logging library for React and Next.js applications",
   "type": "module",
   "main": "dist/index.js",
@@ -15,7 +15,6 @@
     "lint": "tsc --noEmit",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run lint && npm run test && npm run build",
-    "version": "npm run build && git add -A dist",
     "postversion": "git push && git push --tags",
     "prepare": "npm run build"
   },
