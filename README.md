@@ -9,12 +9,14 @@ Uma biblioteca de logging moderna e completa para aplicações React e Next.js, 
 
 - 🎯 **Dual Environment**: Funciona tanto no client quanto no server
 - 🪝 **React Hooks**: Hook `useLogger` para componentes React
-- 🔧 **Configurável**: Níveis de log customizáveis
+- 🔒 **Mascaramento Automático**: Protege dados sensíveis (senhas, emails, CPF, etc.) automaticamente
+- 🔧 **Configurável**: Níveis de log e campos sensíveis customizáveis
 - 📝 **TypeScript**: Totalmente tipado
 - 🚀 **Next.js Ready**: Middleware para logging de requisições
 - 📦 **Zero Config**: Funciona out-of-the-box
-- 🎨 **Formatação**: Timestamps automáticos e formatação de mensagens
+- 🎨 **Formatação**: Timestamps automáticos e cores no terminal (servidor)
 - 🔌 **Extensível**: Sistema de transporte customizável
+- ⚡ **Compatível**: React 17+, React 18, React 19 e Next.js 12-16
 
 ## 📦 Instalação
 
@@ -39,13 +41,15 @@ pnpm add react-nextjs-logger
 ### Client-Side (React)
 
 ```tsx
+'use client'; // Para Next.js 13+
+
 import { useLogger } from 'react-nextjs-logger';
 
 function MyComponent() {
-  const logger = useLogger();
+  const logger = useLogger({ prefix: 'MyComponent' });
 
   const handleClick = () => {
-    logger.info('Botão clicado!');
+    logger.info('Botão clicado!', { userId: 123 });
     logger.warn('Aviso importante');
     logger.error('Erro ocorreu');
   };
@@ -54,30 +58,62 @@ function MyComponent() {
 }
 ```
 
-### Server-Side (Next.js API Routes)
+### Server-Side (Next.js - logs no terminal do servidor)
 
 ```typescript
-// pages/api/users.ts
+// app/api/users/route.ts
 import { ServerLogger, LogLevel } from 'react-nextjs-logger';
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { NextRequest, NextResponse } from 'next/server';
 
+// Logs aparecem no TERMINAL DO SERVIDOR (VS Code terminal)
 const logger = new ServerLogger(LogLevel.INFO);
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  logger.info(`[${req.method}] ${req.url}`);
+export async function GET(request: NextRequest) {
+  logger.info('API /api/users chamada', { method: 'GET' });
 
   try {
     const users = await getUsers();
-    logger.info(`Retornando ${users.length} usuários`);
-    res.status(200).json(users);
+    logger.info('Usuários retornados', { count: users.length });
+    return NextResponse.json(users);
   } catch (error) {
-    logger.error(`Erro: ${error.message}`);
-    res.status(500).json({ error: 'Erro interno' });
+    logger.error('Erro ao buscar usuários', error as Error);
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
+```
+
+**🔍 Importante**: O `ServerLogger` imprime logs no **terminal do servidor** (onde você roda `npm run dev`), não no console do navegador. Similar ao logging do Spring Boot. [Veja documentação completa](./SERVER_LOGGING.md)
+
+### 🔒 Mascaramento Automático de Dados Sensíveis
+
+```tsx
+'use server';
+import { ServerLogger } from 'react-nextjs-logger';
+
+const logger = new ServerLogger();
+
+export async function loginUser(credentials: any) {
+  // Dados sensíveis são mascarados automaticamente!
+  logger.info('Login attempt', {
+    email: 'user@example.com',     // → 'use***com'
+    password: 'secret123',         // → 'sec***123'
+    userId: 123,                   // → 123 (não mascarado)
+  });
+}
+```
+
+**Campos mascarados por padrão:** password, email, cpf, token, creditCard, phone, etc.
+
+**Configuração opcional (`.env`):**
+```env
+# Desabilitar mascaramento padrão
+NEXT_PUBLIC_DEFAULT_MASK=false
+
+# Adicionar campos customizados
+NEXT_PUBLIC_MASK_FIELDS=customField,secretKey,internalId
+```
+
+📖 **[Documentação completa de mascaramento](./MASKING.md)**
 ```
 
 ## 📚 Documentação
@@ -186,6 +222,57 @@ export default function handler(req, res) {
 
 ## 🔧 Exemplos Avançados
 
+### Next.js 15 com App Router
+
+```typescript
+// app/api/users/route.ts (Next.js 15)
+import { ServerLogger, LogLevel } from 'react-nextjs-logger';
+import { NextResponse } from 'next/server';
+
+const logger = new ServerLogger(LogLevel.INFO);
+
+export async function GET(request: Request) {
+  logger.info(`[GET] ${request.url}`);
+  
+  try {
+    const users = await fetchUsers();
+    logger.info(`Returning ${users.length} users`);
+    return NextResponse.json(users);
+  } catch (error) {
+    logger.error(`Error: ${error.message}`);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  }
+}
+```
+
+```tsx
+// app/page.tsx (Next.js 15)
+'use client';
+
+import { useLogger } from 'react-nextjs-logger';
+
+export default function HomePage() {
+  const logger = useLogger();
+
+  const handleAction = async () => {
+    logger.info('User action started');
+    
+    try {
+      const response = await fetch('/api/users');
+      logger.info('API call successful');
+    } catch (error) {
+      logger.error(`API call failed: ${error.message}`);
+    }
+  };
+
+  return (
+    <button onClick={handleAction}>
+      Fetch Users
+    </button>
+  );
+}
+```
+
 ### Logging Condicional
 
 ```typescript
@@ -236,6 +323,63 @@ function UserProfile({ userId }) {
 
   return <div>Profile</div>;
 }
+```
+
+## 🔄 Compatibilidade
+
+### Versões Suportadas
+
+| Framework | Versões Suportadas | Status |
+|-----------|-------------------|--------|
+| **React** | 17.x, 18.x, 19.x | ✅ Testado |
+| **Next.js** | 12.x, 13.x, 14.x, 15.x | ✅ Testado |
+| **TypeScript** | 5.0+ | ✅ Recomendado |
+| **Node.js** | 18+ | ✅ Recomendado |
+
+### Recursos por Versão do Next.js
+
+#### Next.js 15 (App Router)
+✅ Suporte completo para Server Components  
+✅ Suporte completo para Client Components  
+✅ API Routes no diretório `/app/api`  
+✅ Server Actions  
+✅ Middleware  
+
+#### Next.js 14 (App Router)
+✅ Server Components  
+✅ Client Components  
+✅ API Routes  
+✅ Middleware  
+
+#### Next.js 13 (Pages Router e App Router)
+✅ Pages Router  
+✅ App Router (experimental)  
+✅ API Routes  
+✅ Middleware  
+
+#### Next.js 12 (Pages Router)
+✅ Pages Router  
+✅ API Routes  
+✅ Middleware  
+
+### Notas sobre React 19
+
+A biblioteca é totalmente compatível com React 19, incluindo:
+- ✅ Novo sistema de renderização
+- ✅ Hooks atualizados
+- ✅ Strict Mode aprimorado
+- ✅ Concurrent Features
+
+### ESM e CommonJS
+
+A biblioteca fornece builds tanto em **ES Modules** quanto **CommonJS**:
+
+```javascript
+// ESM (Next.js 15, Vite, etc)
+import { ClientLogger, useLogger } from 'react-nextjs-logger';
+
+// CommonJS (Node.js tradicional)
+const { ClientLogger, useLogger } = require('react-nextjs-logger');
 ```
 
 ## 🧪 Testando Localmente
