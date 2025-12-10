@@ -15,6 +15,7 @@ Uma biblioteca de logging moderna e completa para aplicações React e Next.js, 
 - 📦 **Zero Config**: Funciona out-of-the-box
 - 🎨 **Formatação**: Timestamps automáticos e formatação de mensagens
 - 🔌 **Extensível**: Sistema de transporte customizável
+- ⚡ **Compatível**: React 17+, React 18, React 19 e Next.js 12-15
 
 ## 📦 Instalação
 
@@ -186,6 +187,57 @@ export default function handler(req, res) {
 
 ## 🔧 Exemplos Avançados
 
+### Next.js 15 com App Router
+
+```typescript
+// app/api/users/route.ts (Next.js 15)
+import { ServerLogger, LogLevel } from 'react-nextjs-logger';
+import { NextResponse } from 'next/server';
+
+const logger = new ServerLogger(LogLevel.INFO);
+
+export async function GET(request: Request) {
+  logger.info(`[GET] ${request.url}`);
+  
+  try {
+    const users = await fetchUsers();
+    logger.info(`Returning ${users.length} users`);
+    return NextResponse.json(users);
+  } catch (error) {
+    logger.error(`Error: ${error.message}`);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  }
+}
+```
+
+```tsx
+// app/page.tsx (Next.js 15)
+'use client';
+
+import { useLogger } from 'react-nextjs-logger';
+
+export default function HomePage() {
+  const logger = useLogger();
+
+  const handleAction = async () => {
+    logger.info('User action started');
+    
+    try {
+      const response = await fetch('/api/users');
+      logger.info('API call successful');
+    } catch (error) {
+      logger.error(`API call failed: ${error.message}`);
+    }
+  };
+
+  return (
+    <button onClick={handleAction}>
+      Fetch Users
+    </button>
+  );
+}
+```
+
 ### Logging Condicional
 
 ```typescript
@@ -236,6 +288,63 @@ function UserProfile({ userId }) {
 
   return <div>Profile</div>;
 }
+```
+
+## 🔄 Compatibilidade
+
+### Versões Suportadas
+
+| Framework | Versões Suportadas | Status |
+|-----------|-------------------|--------|
+| **React** | 17.x, 18.x, 19.x | ✅ Testado |
+| **Next.js** | 12.x, 13.x, 14.x, 15.x | ✅ Testado |
+| **TypeScript** | 5.0+ | ✅ Recomendado |
+| **Node.js** | 18+ | ✅ Recomendado |
+
+### Recursos por Versão do Next.js
+
+#### Next.js 15 (App Router)
+✅ Suporte completo para Server Components  
+✅ Suporte completo para Client Components  
+✅ API Routes no diretório `/app/api`  
+✅ Server Actions  
+✅ Middleware  
+
+#### Next.js 14 (App Router)
+✅ Server Components  
+✅ Client Components  
+✅ API Routes  
+✅ Middleware  
+
+#### Next.js 13 (Pages Router e App Router)
+✅ Pages Router  
+✅ App Router (experimental)  
+✅ API Routes  
+✅ Middleware  
+
+#### Next.js 12 (Pages Router)
+✅ Pages Router  
+✅ API Routes  
+✅ Middleware  
+
+### Notas sobre React 19
+
+A biblioteca é totalmente compatível com React 19, incluindo:
+- ✅ Novo sistema de renderização
+- ✅ Hooks atualizados
+- ✅ Strict Mode aprimorado
+- ✅ Concurrent Features
+
+### ESM e CommonJS
+
+A biblioteca fornece builds tanto em **ES Modules** quanto **CommonJS**:
+
+```javascript
+// ESM (Next.js 15, Vite, etc)
+import { ClientLogger, useLogger } from 'react-nextjs-logger';
+
+// CommonJS (Node.js tradicional)
+const { ClientLogger, useLogger } = require('react-nextjs-logger');
 ```
 
 ## 🧪 Testando Localmente
