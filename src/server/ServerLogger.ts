@@ -109,8 +109,9 @@ export class ServerLogger {
         const bright = this.enableColors ? colors.bright : '';
 
         const contextPrefix = this.formatContextPrefix();
+        const levelName = LogLevel[level];
 
-        return `${gray}[${timestamp}]${reset} ${bright}[SERVER]${reset} ${color}[${level}]${reset}${contextPrefix} ${message}`;
+        return `${gray}[${timestamp}]${reset} ${bright}[SERVER]${reset} ${color}[${levelName}]${reset}${contextPrefix} ${message}`;
     }
 
     private formatContextPrefix(): string {
@@ -168,7 +169,7 @@ export class ServerLogger {
         if (this.jsonOutput) {
             const payload: any = {
                 ts: new Date().toISOString(),
-                level,
+                level: LogLevel[level],
                 message,
                 source: 'server',
                 hostname: this.hostname

@@ -12,22 +12,27 @@ const useLogger = (options?: UseLoggerOptions) => {
         return new ClientLogger(options?.logLevel);
     }, [options?.logLevel]);
 
+    const debug = (message: string, data?: any) => {
+        const fullMessage = options?.prefix ? `[${options.prefix}] ${message}` : message;
+        logger.debug(fullMessage, data);
+    };
+
     const info = (message: string, data?: any) => {
         const fullMessage = options?.prefix ? `[${options.prefix}] ${message}` : message;
-        logger.info(data ? `${fullMessage} ${JSON.stringify(data)}` : fullMessage);
+        logger.info(fullMessage, data);
     };
 
     const warn = (message: string, data?: any) => {
         const fullMessage = options?.prefix ? `[${options.prefix}] ${message}` : message;
-        logger.warn(data ? `${fullMessage} ${JSON.stringify(data)}` : fullMessage);
+        logger.warn(fullMessage, data);
     };
 
     const error = (message: string, data?: any) => {
         const fullMessage = options?.prefix ? `[${options.prefix}] ${message}` : message;
-        logger.error(data ? `${fullMessage} ${JSON.stringify(data)}` : fullMessage);
+        logger.error(fullMessage, data);
     };
 
-    return { info, warn, error };
+    return { debug, info, warn, error, setLogLevel: logger.setLogLevel.bind(logger) };
 };
 
 export default useLogger;

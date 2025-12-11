@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test ClientLogger</title>
+</head>
+<body>
+    <h1>Teste Client Logger</h1>
+    <button id="testBtn">Clique para testar logs</button>
+
+    <script type="module">
+        import { ClientLogger } from './dist/client.esm.js';
+
+        const logger = new ClientLogger();
+        
+        console.log('=== Teste ClientLogger ===');
+
+        // Teste 1: Log simples
+        logger.info('Teste de log INFO', { userId: 123, action: 'test' });
+        
+        // Teste 2: Warning
+        logger.warn('Teste de warning', { level: 'medium' });
+        
+        // Teste 3: Error
+        logger.error('Teste de erro', { code: 500, message: 'Internal error' });
+        
+        // Teste 4: Debug
+        logger.debug('Teste de debug', { details: 'some debug info' });
+
+        // Teste 5: Com dados sensíveis (deve mascarar)
+        logger.info('Login attempt', { 
+            email: 'user@example.com',
+            password: 'secret123',
+            userId: 456 
+        });
+
+        // Teste no botão
+        document.getElementById('testBtn').addEventListener('click', () => {
+            logger.info('Botão clicado!', { 
+                timestamp: Date.now(),
+                userId: 999 
+            });
+        });
+    </script>
+</body>
+</html>

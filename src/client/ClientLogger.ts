@@ -31,7 +31,8 @@ class ClientLogger {
     private writeLog(level: LogLevel, message: string, data?: any) {
         if (this.shouldLog(level)) {
             const timestamp = new Date().toISOString();
-            const formattedMessage = `[${timestamp}] [CLIENT] [${level}] ${message}`;
+            const levelName = LogLevel[level];
+            const formattedMessage = `[${timestamp}] [CLIENT] [${levelName}] ${message}`;
             
             if (data) {
                 // Mask sensitive data before logging
