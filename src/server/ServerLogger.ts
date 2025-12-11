@@ -1,3 +1,4 @@
+import os from 'os';
 import { LogLevel } from '../core/LogLevel';
 import { maskSensitiveData } from '../utils/mask';
 
@@ -23,6 +24,7 @@ export class ServerLogger {
     private forceServerMode: boolean;
     private context: Record<string, any> | undefined;
     private jsonOutput: boolean;
+    private hostname: string;
 
     constructor(
         logLevel: LogLevel = LogLevel.INFO,
@@ -32,6 +34,7 @@ export class ServerLogger {
     ) {
         this.logLevel = logLevel;
         this.forceServerMode = forceServerMode;
+        this.hostname = os.hostname();
         this.enableColors = enableColors && this.isServer();
         this.context = context;
         const envJson = process.env.RNL_SERVER_LOG_JSON || process.env.LOG_JSON;
@@ -105,24 +108,85 @@ export class ServerLogger {
         const gray = this.enableColors ? colors.gray : '';
         const bright = this.enableColors ? colors.bright : '';
 
-        return `${gray}[${timestamp}]${reset} ${bright}[SERVER]${reset} ${color}[${level}]${reset} ${message}`;
+        const contextPrefix = this.formatContextPrefix();
+
+        return `${gray}[${timestamp}]${reset} ${bright}[SERVER]${reset} ${color}[${level}]${reset}${contextPrefix} ${message}`;
+    }
+
+    private formatContextPrefix(): string {
+        if (!this.context) return '';
+
+        const parts: string[] = [];
+        const gray = this.enableColors ? colors.gray : '';
+        const reset = this.enableColors ? colors.reset : '';
+
+        // Extract service/app/name
+        const serviceName = this.context.service || this.context.app || this.context.name;
+        if (serviceName) {
+            parts.push(`${gray}[Context:${serviceName}]${reset}`);
+        }
+
+        // Add hostname
+        parts.push(`${gray}[Host:${this.hostname}]${reset}`);
+
+        // Extract environment
+        if (this.context.env) {
+            parts.push(`${gray}[Env:${this.context.env}]${reset}`);
+        }
+
+        // Extract version
+        if (this.context.version) {
+            parts.push(`${gray}[v${this.context.version}]${reset}`);
+        }
+
+        return parts.length > 0 ? ' ' + parts.join(' ') : '';
     }
 
     private transport(level: LogLevel, message: string, data?: LogData): void {
         const formattedMessage = this.formatMessage(level, message);
 
-        // Combine context with provided data and mask sensitive data before logging
+        // Combine context with provided data
         const combined = this.context ? { ...this.context, ...(data || {}) } : data;
-        const maskedData = combined ? maskSensitiveData(combined) : undefined;
+
+        // Extract context fields that are shown in prefix
+        let contextForData = combined;
+        if (combined && this.context) {
+            const { service, app, name, env, version, ...rest } = combined;
+            // Only remove the fields if they came from context, not from data
+            const hasService = this.context.service || this.context.app || this.context.name;
+            const hasEnv = this.context.env;
+            const hasVersion = this.context.version;
+
+            if (hasService || hasEnv || hasVersion) {
+                contextForData = { ...rest };
+            }
+        }
+
+        // Mask sensitive data before logging
+        const maskedData = contextForData ? maskSensitiveData(contextForData) : undefined;
 
         if (this.jsonOutput) {
-            const payload = {
+            const payload: any = {
                 ts: new Date().toISOString(),
                 level,
                 message,
-                context: maskedData || undefined,
-                source: 'server'
+                source: 'server',
+                hostname: this.hostname
             };
+
+            // Add context metadata to JSON
+            if (this.context) {
+                const serviceName = this.context.service || this.context.app || this.context.name;
+                if (serviceName) payload.service = serviceName;
+                if (this.context.env) payload.env = this.context.env;
+                if (this.context.version) payload.version = this.context.version;
+            }
+
+            // Add remaining data
+            if (maskedData && Object.keys(maskedData).length > 0) {
+                payload.data = maskedData;
+            }
+
             const json = JSON.stringify(payload);
             switch (level) {
                 case LogLevel.ERROR:
@@ -144,21 +208,21 @@ export class ServerLogger {
         // Use console methods based on log level in human-readable format
         switch (level) {
             case LogLevel.ERROR:
-                if (maskedData) {
+                if (maskedData && Object.keys(maskedData).length > 0) {
                     console.error(formattedMessage, maskedData);
                 } else {
                     console.error(formattedMessage);
                 }
                 break;
             case LogLevel.WARN:
-                if (maskedData) {
+                if (maskedData && Object.keys(maskedData).length > 0) {
                     console.warn(formattedMessage, maskedData);
                 } else {
                     console.warn(formattedMessage);
                 }
                 break;
             case LogLevel.DEBUG:
-                if (maskedData) {
+                if (maskedData && Object.keys(maskedData).length > 0) {
                     console.debug(formattedMessage, maskedData);
                 } else {
                     console.debug(formattedMessage);
@@ -166,7 +230,7 @@ export class ServerLogger {
                 break;
             case LogLevel.INFO:
             default:
-                if (maskedData) {
+                if (maskedData && Object.keys(maskedData).length > 0) {
                     console.log(formattedMessage, maskedData);
                 } else {
                     console.log(formattedMessage);

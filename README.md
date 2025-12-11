@@ -69,9 +69,17 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Logs aparecem no TERMINAL DO SERVIDOR (VS Code terminal)
 // LogLevel configurado automaticamente via env (RNL_LOG_LEVEL ou NODE_ENV)
-const logger = createServerLogger({ context: { service: 'users-api' } });
+// Context extraído para o prefixo: [Context:service] [Host:hostname]
+const logger = createServerLogger({ 
+  context: { 
+    service: 'users-api',
+    env: 'production',
+    version: '1.0.0'
+  } 
+});
 
 export async function GET(request: NextRequest) {
+  // Saída: [timestamp] [SERVER] [INFO] [Context:users-api] [Host:machine-name] [Env:production] [v1.0.0] API /api/users chamada
   logger.info('API /api/users chamada', { method: 'GET' });
 
   try {
@@ -86,6 +94,12 @@ export async function GET(request: NextRequest) {
 ```
 
 **🔍 Importante**: O `ServerLogger` imprime logs no **terminal do servidor** (onde você roda `npm run dev`), não no console do navegador. Similar ao logging do Spring Boot. [Veja documentação completa](./SERVER_LOGGING.md)
+
+**📊 Formato de Saída com Context:**
+- **Human-readable**: `[timestamp] [SERVER] [INFO] [Context:users-api] [Host:machine-name] [Env:production] [v1.0.0] Message`
+- **JSON mode**: `{"service":"users-api","hostname":"machine-name","env":"production","version":"1.0.0",...}`
+- Os campos `service/app/name`, `env`, `version` do context são automaticamente extraídos para o prefixo
+- O hostname da máquina é detectado automaticamente via `os.hostname()`
 
 ### 📦 Exports Organizados
 
@@ -243,19 +257,33 @@ logger.error('Error message');
 import { ServerLogger, LogLevel, createServerLogger } from 'react-nextjs-logger/server';
 
 // LogLevel automático via env (recomendado)
+// Context com service/env/version extraído para prefixo
 const logger = createServerLogger({ 
-  context: { requestId: 'abc-123' } 
+  context: { 
+    service: 'my-api',
+    env: 'production',
+    version: '2.1.0',
+    requestId: 'abc-123'  // Campos adicionais ficam no objeto de dados
+  } 
 });
 
 // Alterar nível em runtime
 logger.setLogLevel(LogLevel.DEBUG);
 
-// Logs com prefixo [SERVER]
+// Logs com prefixo [SERVER] + context metadata
+// Saída: [timestamp] [SERVER] [DEBUG] [Context:my-api] [Host:hostname] [Env:production] [v2.1.0] Debug message
 logger.debug('Debug message');
-logger.info('Info message');
+logger.info('Info message', { userId: 123 });  // requestId não aparece no prefixo
 logger.warn('Warning message');
 logger.error('Error message');
 ```
+
+**Context Metadata no Prefixo:**
+- `service`, `app` ou `name` → `[Context:valor]`
+- `env` → `[Env:valor]`
+- `version` → `[vvalor]`
+- Hostname automático → `[Host:machine-name]`
+- Outros campos do context permanecem no objeto de dados
 
 ### useLogger Hook
 
@@ -318,11 +346,17 @@ import { createServerLogger } from 'react-nextjs-logger/server';
 import { NextResponse } from 'next/server';
 
 // LogLevel configurado automaticamente via env
+// Context extraído para prefixo com hostname automático
 const logger = createServerLogger({ 
-  context: { service: 'users-api' } 
+  context: { 
+    service: 'users-api',
+    env: process.env.NODE_ENV,
+    version: '1.0.0'
+  } 
 });
 
 export async function GET(request: Request) {
+  // Saída: [timestamp] [SERVER] [INFO] [Context:users-api] [Host:hostname] [Env:production] [v1.0.0] [GET] /api/users
   logger.info(`[GET] ${request.url}`);
   
   try {
