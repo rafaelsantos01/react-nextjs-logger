@@ -29,9 +29,10 @@ O ServerLogger **detecta automaticamente** se está rodando no servidor e mostra
 ```tsx
 'use server';
 
-import { ServerLogger } from 'react-nextjs-logger';
+import { ServerLogger, createServerLogger } from 'react-nextjs-logger/server';
 
-const logger = new ServerLogger();
+// LogLevel configurado automaticamente via env (RNL_LOG_LEVEL ou NODE_ENV)
+const logger = createServerLogger({ context: { service: 'actions' } });
 
 export async function createUser(formData: FormData) {
   const name = formData.get('name') as string;
@@ -60,9 +61,9 @@ export async function createUser(formData: FormData) {
 ```tsx
 // app/api/users/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { ServerLogger, LogLevel } from 'react-nextjs-logger';
+import { ServerLogger, LogLevel, createServerLogger } from 'react-nextjs-logger/server';
 
-const logger = new ServerLogger(LogLevel.DEBUG);
+const logger = createServerLogger({ level: LogLevel.DEBUG, context: { service: 'api' } });
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -95,9 +96,9 @@ export async function GET(request: NextRequest) {
 // middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { ServerLogger } from 'react-nextjs-logger';
+import { ServerLogger, createServerLogger } from 'react-nextjs-logger/server';
 
-const logger = new ServerLogger();
+const logger = createServerLogger({ context: { service: 'middleware' } });
 
 export function middleware(request: NextRequest) {
   const startTime = Date.now();
@@ -132,9 +133,9 @@ export const config = {
 
 ```tsx
 // app/dashboard/page.tsx
-import { ServerLogger } from 'react-nextjs-logger';
+import { ServerLogger, createServerLogger } from 'react-nextjs-logger/server';
 
-const logger = new ServerLogger();
+const logger = createServerLogger({ context: { page: 'dashboard' } });
 
 async function getData() {
   logger.info('Carregando dados do dashboard');
@@ -169,23 +170,40 @@ const logger = new ServerLogger(LogLevel.INFO, false); // false = sem cores
 
 ## 📊 Níveis de Log
 
+**Configuração automática (recomendado):**
+
 ```tsx
-import { ServerLogger, LogLevel } from 'react-nextjs-logger';
+import { createServerLogger } from 'react-nextjs-logger/server';
 
-// Desenvolvimento - mostra tudo
-const devLogger = new ServerLogger(LogLevel.DEBUG);
+// LogLevel detectado automaticamente via env
+const logger = createServerLogger({ context: { service: 'my-api' } });
+```
 
-// Produção - só WARN e ERROR
-const prodLogger = new ServerLogger(LogLevel.WARN);
+**Variáveis de ambiente:**
+```env
+# Prioridade 1: Level customizado
+RNL_LOG_LEVEL=DEBUG  # DEBUG | INFO | WARN | ERROR
 
-// Ou configure dinamicamente
-const logger = new ServerLogger();
+# Prioridade 2: Fallback
+LOG_LEVEL=INFO
 
-if (process.env.NODE_ENV === 'development') {
-  logger.setLogLevel(LogLevel.DEBUG);
-} else {
-  logger.setLogLevel(LogLevel.WARN);
-}
+# Prioridade 3: Mapeamento automático do NODE_ENV
+NODE_ENV=production  # → WARN
+NODE_ENV=development # → DEBUG
+NODE_ENV=test        # → ERROR
+```
+
+**Configuração manual (quando necessário):**
+
+```tsx
+import { ServerLogger, LogLevel } from 'react-nextjs-logger/server';
+
+// Usando constructor direto
+const manualLogger = new ServerLogger(LogLevel.WARN);
+
+// Ou alterando em runtime
+const logger = createServerLogger();
+logger.setLogLevel(LogLevel.DEBUG);
 ```
 
 ## 🐛 Tratamento de Erros
@@ -298,3 +316,17 @@ Se você vem do Spring Boot, vai se sentir em casa:
 **Como salvar logs em arquivo?**
 - Para produção, considere usar ferramentas como Winston, Pino ou integrar com serviços de logging
 - Este logger é focado em desenvolvimento, similar ao console do Spring Boot
+
+## 📄 Modo JSON
+
+Para integrar com agregadores de logs (Datadog, Loki, Stackdriver, etc.), você pode habilitar o modo JSON no servidor:
+
+```env
+RNL_SERVER_LOG_JSON=true
+```
+
+Exemplo de saída:
+
+```json
+{"ts":"2025-12-11T12:34:56.789Z","level":"INFO","message":"Operação concluída","context":{"service":"api","requestId":"abc-123"},"source":"server"}
+```

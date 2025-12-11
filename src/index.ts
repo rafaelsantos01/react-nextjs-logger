@@ -3,7 +3,7 @@ export { default as ClientLogger } from './client/ClientLogger';
 export { default as useLogger } from './client/hooks/useLogger';
 
 // Server exports
-export { default as ServerLogger } from './server/ServerLogger';
+export { default as ServerLogger, createServerLogger } from './server/ServerLogger';
 
 // Core exports
 export { LogLevel } from './core/LogLevel';

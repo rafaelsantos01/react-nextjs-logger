@@ -62,11 +62,14 @@ function MyComponent() {
 
 ```typescript
 // app/api/users/route.ts
-import { ServerLogger, LogLevel } from 'react-nextjs-logger';
+'use server';
+
+import { ServerLogger, createServerLogger } from 'react-nextjs-logger/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Logs aparecem no TERMINAL DO SERVIDOR (VS Code terminal)
-const logger = new ServerLogger(LogLevel.INFO);
+// LogLevel configurado automaticamente via env (RNL_LOG_LEVEL ou NODE_ENV)
+const logger = createServerLogger({ context: { service: 'users-api' } });
 
 export async function GET(request: NextRequest) {
   logger.info('API /api/users chamada', { method: 'GET' });
@@ -84,13 +87,34 @@ export async function GET(request: NextRequest) {
 
 **🔍 Importante**: O `ServerLogger` imprime logs no **terminal do servidor** (onde você roda `npm run dev`), não no console do navegador. Similar ao logging do Spring Boot. [Veja documentação completa](./SERVER_LOGGING.md)
 
+### 📦 Exports Organizados
+
+Você pode importar por subpaths para melhor DX e tree-shaking:
+
+```ts
+// Top-level (tudo disponível)
+import { ClientLogger, ServerLogger, LogLevel, useLogger } from 'react-nextjs-logger';
+
+// Subpaths (recomendado para melhor tree-shaking)
+import { ServerLogger, createServerLogger } from 'react-nextjs-logger/server';
+import { ClientLogger } from 'react-nextjs-logger/client';
+import { useLogger } from 'react-nextjs-logger/hooks';
+import { maskSensitiveData } from 'react-nextjs-logger/utils/mask';
+```
+
+Subpaths disponíveis:
+- `react-nextjs-logger/server`
+- `react-nextjs-logger/client`
+- `react-nextjs-logger/hooks`
+- `react-nextjs-logger/utils/mask`
+
 ### 🔒 Mascaramento Automático de Dados Sensíveis
 
 ```tsx
 'use server';
-import { ServerLogger } from 'react-nextjs-logger';
+import { createServerLogger } from 'react-nextjs-logger/server';
 
-const logger = new ServerLogger();
+const logger = createServerLogger();
 
 export async function loginUser(credentials: any) {
   // Dados sensíveis são mascarados automaticamente!
@@ -111,9 +135,70 @@ NEXT_PUBLIC_DEFAULT_MASK=false
 
 # Adicionar campos customizados
 NEXT_PUBLIC_MASK_FIELDS=customField,secretKey,internalId
+
+# Saída JSON no servidor (útil para agregadores)
+RNL_SERVER_LOG_JSON=true
+```
+
+Quando `RNL_SERVER_LOG_JSON=true`, o `ServerLogger` passa a emitir linhas JSON com o formato:
+
+```json
+{"ts":"2025-12-11T12:34:56.789Z","level":"INFO","message":"API /api/users chamada","context":{"service":"users-api","method":"GET"},"source":"server"}
 ```
 
 📖 **[Documentação completa de mascaramento](./MASKING.md)**
+
+### ⚙️ Configuração de LogLevel por Ambiente
+
+É recomendado configurar o nível de log baseado no ambiente:
+
+### ⚡ Configuração Automática de LogLevel
+
+O `createServerLogger` detecta automaticamente o LogLevel baseado em variáveis de ambiente:
+
+**Prioridade:**
+1. `RNL_LOG_LEVEL` (se definido)
+2. `LOG_LEVEL` (fallback)
+3. `NODE_ENV` (mapeamento automático):
+   - `production` → `WARN`
+   - `test` → `ERROR`
+   - `development` → `DEBUG`
+
+**Uso simples (recomendado):**
+```typescript
+// LogLevel configurado automaticamente pela env
+const logger = createServerLogger({ 
+  context: { service: 'my-api' } 
+});
+```
+
+**Variáveis de ambiente disponíveis:**
+```env
+# Opção 1: Definir level customizado (sobrescreve NODE_ENV)
+RNL_LOG_LEVEL=INFO  # DEBUG | INFO | WARN | ERROR
+
+# Opção 2: Fallback (se RNL_LOG_LEVEL não existir)
+LOG_LEVEL=DEBUG
+
+# Opção 3: Deixar NODE_ENV fazer o mapeamento automático
+NODE_ENV=production  # → WARN
+NODE_ENV=development # → DEBUG
+
+# Outras configs
+SERVICE_NAME=my-api
+RNL_SERVER_LOG_JSON=true
+```
+
+**Override manual (quando necessário):**
+```typescript
+import { LogLevel } from 'react-nextjs-logger';
+
+// Forçar um level específico ignorando env
+const logger = createServerLogger({ 
+  level: LogLevel.ERROR,  // sempre ERROR independente da env
+  context: { service: 'critical-service' } 
+});
+```
 ```
 
 ## 📚 Documentação
@@ -155,9 +240,12 @@ logger.error('Error message');
 ### ServerLogger
 
 ```typescript
-import { ServerLogger, LogLevel } from 'react-nextjs-logger';
+import { ServerLogger, LogLevel, createServerLogger } from 'react-nextjs-logger/server';
 
-const logger = new ServerLogger(LogLevel.INFO);
+// LogLevel automático via env (recomendado)
+const logger = createServerLogger({ 
+  context: { requestId: 'abc-123' } 
+});
 
 // Alterar nível em runtime
 logger.setLogLevel(LogLevel.DEBUG);
@@ -226,10 +314,13 @@ export default function handler(req, res) {
 
 ```typescript
 // app/api/users/route.ts (Next.js 15)
-import { ServerLogger, LogLevel } from 'react-nextjs-logger';
+import { createServerLogger } from 'react-nextjs-logger/server';
 import { NextResponse } from 'next/server';
 
-const logger = new ServerLogger(LogLevel.INFO);
+// LogLevel configurado automaticamente via env
+const logger = createServerLogger({ 
+  context: { service: 'users-api' } 
+});
 
 export async function GET(request: Request) {
   logger.info(`[GET] ${request.url}`);
@@ -275,12 +366,25 @@ export default function HomePage() {
 
 ### Logging Condicional
 
+**Usando env (recomendado):**
 ```typescript
-const logger = new ServerLogger(
-  process.env.NODE_ENV === 'production' 
-    ? LogLevel.WARN 
-    : LogLevel.DEBUG
-);
+import { createServerLogger } from 'react-nextjs-logger/server';
+
+// LogLevel detectado automaticamente via RNL_LOG_LEVEL ou NODE_ENV
+const logger = createServerLogger({ 
+  context: { service: 'my-api' } 
+});
+```
+
+**Override manual (quando necessário):**
+```typescript
+import { LogLevel } from 'react-nextjs-logger';
+import { createServerLogger } from 'react-nextjs-logger/server';
+
+const logger = createServerLogger({
+  level: process.env.NODE_ENV === 'production' ? LogLevel.WARN : LogLevel.DEBUG,
+  context: { service: 'my-api' }
+});
 ```
 
 ### Custom Transport
@@ -332,7 +436,7 @@ function UserProfile({ userId }) {
 | Framework | Versões Suportadas | Status |
 |-----------|-------------------|--------|
 | **React** | 17.x, 18.x, 19.x | ✅ Testado |
-| **Next.js** | 12.x, 13.x, 14.x, 15.x | ✅ Testado |
+| **Next.js** | 12.x, 13.x, 14.x, 15.x, 16.x | ✅ Testado |
 | **TypeScript** | 5.0+ | ✅ Recomendado |
 | **Node.js** | 18+ | ✅ Recomendado |
 

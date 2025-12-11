@@ -23,6 +23,8 @@ Quando você loga um objeto com dados sensíveis, a biblioteca automaticamente:
 ```tsx
 'use server';
 import { ServerLogger } from 'react-nextjs-logger';
+// ou importe utilitários diretamente por subpath
+// import { maskSensitiveData } from 'react-nextjs-logger/utils/mask';
 
 const logger = new ServerLogger();
 
