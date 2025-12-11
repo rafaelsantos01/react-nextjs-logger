@@ -11,6 +11,26 @@
       "import": "./dist/index.esm.js",
       "require": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./server": {
+      "import": "./dist/server.esm.js",
+      "require": "./dist/server.js",
+      "types": "./dist/server.d.ts"
+    },
+    "./client": {
+      "import": "./dist/client.esm.js",
+      "require": "./dist/client.js",
+      "types": "./dist/client.d.ts"
+    },
+    "./hooks": {
+      "import": "./dist/hooks.esm.js",
+      "require": "./dist/hooks.js",
+      "types": "./dist/hooks.d.ts"
+    },
+    "./utils/mask": {
+      "import": "./dist/utils/mask.esm.js",
+      "require": "./dist/utils/mask.js",
+      "types": "./dist/utils/mask.d.ts"
     }
   },
   "sideEffects": false,
